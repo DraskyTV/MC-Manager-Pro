@@ -45,3 +45,5 @@ Pokud chcete kód upravovat nebo testovat lokálně v Pythonu:
 ### Spuštění
 1. Klonujte tento repozitář:
    ```bash
+   git clone [https://github.com/DraskyTV/MC-Manager-Pro.git](https://github.com/DraskyTV/MC-Manager-Pro.git)
+   cd MC-Manager-Pro
