@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC-Manager Pro | Administrace</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen relative">
+
+    <div id="eula-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full mx-4 transform scale-95 transition-transform duration-300">
+            <div class="text-indigo-600 text-4xl mb-4 text-center">
+                <i class="fa-solid fa-file-shield"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 text-center mb-2">Potvrzení Minecraft EULA</h3>
+            <p class="text-sm text-slate-600 text-center mb-6">
+                Před prvním spuštěním musíte vyjádřit souhlas s licenčními podmínkami společnosti Mojang.
+            </p>
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs text-slate-500 mb-6 font-mono text-center">
+                <a href="https://account.mojang.com/documents/minecraft_eula" target="_blank" class="text-indigo-600 underline hover:text-indigo-700">Zobrazit oficiální text podmínky <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i></a>
+            </div>
+            <div class="flex gap-4">
+                <button onclick="toggleEula(false)" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition cursor-pointer">Zrušit</button>
+                <button onclick="acceptEulaAndStart()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition cursor-pointer shadow-xs">Souhlasím a spustit</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4 py-12">
+        
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-2xl shadow-xs border border-slate-100 mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-cube text-indigo-600"></i> MC-Manager <span class="text-indigo-600 font-medium text-lg bg-indigo-50 px-2 py-0.5 rounded-md">Pro</span>
+                </h1>
+                <p class="text-xs text-slate-400 mt-1" id="current-folder">Pracovní složka: Načítání...</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="status-badge" class="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-slate-400"></span> Kontrola...
+                </div>
+                <button id="btn-start" onclick="checkEulaBeforeStart()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-5 py-2 rounded-xl transition cursor-pointer shadow-xs"><i class="fa-solid fa-play mr-1"></i> Spustit server</button>
+                <button id="btn-stop" onclick="stopServer()" class="bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-5 py-2 rounded-xl transition cursor-pointer shadow-xs hidden"><i class="fa-solid fa-stop mr-1"></i> Vypnout server</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <div class="md:col-span-2 space-y-8">
+                
+                <section class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100">
+                    <h2 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-cloud-arrow-down text-indigo-600"></i> 1. Výběr složky a verze hry</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Cesta k instalaci na PC</label>
+                            <input type="text" id="input-path" placeholder="C:\MinecraftServer" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-600 bg-slate-50 text-sm" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Verze Minecraftu</label>
+                            <select id="input-version" class="w-full px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-indigo-600">
+                                <option value="26.1.2">Paper 26.1.2 (Nejnovější)</option>
+                                <option value="1.21.1">Paper 1.21.1</option>
+                                <option value="1.20.1">Paper 1.20.1</option>
+                            </select>
+                        </div>
+                        <div class="sm:col-span-3">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Název světa (level-name)</label>
+                            <input type="text" id="input-name" value="world" class="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-600 bg-slate-50 text-sm" />
+                        </div>
+                    </div>
+                    <button onclick="initServerSetup()" id="btn-init" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition cursor-pointer flex items-center gap-2">
+                        <i class="fa-solid fa-gear"></i> Potvrdit a připravit složku
+                    </button>
+                </section>
+
+                <section class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100">
+                    <h2 class="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2"><i class="fa-solid fa-sliders text-indigo-600"></i> 2. Konfigurace serveru (server.properties)</h2>
+                    
+                    <form id="props-form" onsubmit="saveConfig(event)" class="space-y-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Herní obtížnost</label>
+                                <select id="prop-difficulty" name="difficulty" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-indigo-600">
+                                    <option value="peaceful">Peaceful</option>
+                                    <option value="easy">Easy</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Herní mód (gamemode)</label>
+                                <select id="prop-gamemode" name="gamemode" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-indigo-600">
+                                    <option value="survival">Survival</option>
+                                    <option value="creative">Creative</option>
+                                    <option value="adventure">Adventure</option>
+                                    <option value="spectator">Spectator</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Maximální počet hráčů</label>
+                                <input type="number" id="prop-max-players" name="max-players" class="w-full px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-indigo-600" />
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Typ účtů (Online Mode / Warez)</label>
+                                <select id="prop-online-mode" name="online-mode" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-indigo-600">
+                                    <option value="false">Povolit neoriginální hráče (Warez)</option>
+                                    <option value="true">Pouze originální účty</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-4">
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Operátoři serveru (Admini / OP)</label>
+                            <input type="text" id="prop-ops" placeholder="Jenda, Pepa, Admin123 (oddělujte čárkou)" class="w-full px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-indigo-600" />
+                            <span class="text-[11px] text-slate-400 block mt-1">Uvedení hráči dostanou administrátorská práva přímo v ops.json.</span>
+                        </div>
+
+                        <div class="border-t border-slate-100 pt-4">
+                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                                <div>
+                                    <span class="block font-semibold text-sm text-slate-800">Povolit PVP (Boj mezi hráči)</span>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="prop-pvp" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition cursor-pointer"><i class="fa-solid fa-floppy-disk mr-1"></i> Uložit a zapsat konfiguraci</button>
+                    </form>
+                </section>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100">
+                    <h3 class="font-bold text-slate-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-circle-info text-indigo-600"></i> Detaily o jádru</h3>
+                    <div class="space-y-3 text-xs">
+                        <div class="flex justify-between py-1.5 border-b border-slate-100">
+                            <span class="text-slate-400">Software:</span>
+                            <span class="font-bold text-indigo-600">Paper High-Performance</span>
+                        </div>
+                        <div class="flex justify-between py-1.5">
+                            <span class="text-slate-400">Vybraná verze:</span>
+                            <span id="label-active-version" class="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">Zatím nezvoleno</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-100">
+                    <h3 class="font-bold text-slate-900 mb-4 flex items-center gap-2"><i class="fa-solid fa-network-wired text-sky-600"></i> Síťové adresy</h3>
+                    <div class="space-y-3 text-xs">
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <span class="block text-slate-400 font-medium mb-1">Připojení pro tebe:</span>
+                            <span class="font-mono text-indigo-600 font-bold">localhost:25565</span>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <span class="block text-slate-400 font-medium mb-1">Pro kamarády z internetu:</span>
+                            <span class="font-mono text-slate-600 font-semibold">Tvoje_Verejna_IP:25565</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden fixed bottom-5 right-5 p-4 rounded-xl text-sm font-medium shadow-md z-50"></div>
+
+    <script>
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-5 right-5 p-4 rounded-xl text-sm font-medium shadow-md z-50 ${isError ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 4000);
+        }
+
+        async function updateStatus() {
+            const res = await fetch('/api/server/status');
+            const data = await res.json();
+            const badge = document.getElementById('status-badge');
+            const btnStart = document.getElementById('btn-start');
+            const btnStop = document.getElementById('btn-stop');
+            document.getElementById('current-folder').textContent = `Pracovní složka: ${data.path}`;
+            
+            if (data.running) {
+                badge.className = "bg-emerald-50 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2 border border-emerald-200";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Běží`;
+                btnStart.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+            } else {
+                badge.className = "bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-2";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> Zastaven`;
+                btnStart.classList.remove('hidden');
+                btnStop.classList.add('hidden');
+            }
+        }
+
+        async function loadConfig() {
+            const res = await fetch('/api/properties');
+            const data = await res.json();
+            if (Object.keys(data).length === 0) return;
+            
+            if (data['difficulty']) document.getElementById('prop-difficulty').value = data['difficulty'];
+            if (data['gamemode']) document.getElementById('prop-gamemode').value = data['gamemode'];
+            if (data['max-players']) document.getElementById('prop-max-players').value = data['max-players'];
+            if (data['online-mode']) document.getElementById('prop-online-mode').value = data['online-mode'];
+            if (data['ops_list']) document.getElementById('prop-ops').value = data['ops_list'].join(', ');
+            document.getElementById('prop-pvp').checked = data['pvp'] === 'true';
+        }
+
+        async function initServerSetup() {
+            const path = document.getElementById('input-path').value;
+            const name = document.getElementById('input-name').value;
+            const version = document.getElementById('input-version').value;
+            const btn = document.getElementById('btn-init');
+            
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Inicializace složky...`;
+            
+            try {
+                const res = await fetch('/api/config/init', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ path, name, version })
+                });
+                const data = await res.json();
+                showToast(data.message, !res.ok);
+                document.getElementById('label-active-version').textContent = `Paper ${version}`;
+                updateStatus();
+                loadConfig();
+            } catch (err) {
+                showToast("Chyba při komunikaci s aplikací.", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-gear"></i> Potvrdit a připravit složku`;
+            }
+        }
+
+        async function saveConfig(event) {
+            event.preventDefault();
+            const difficulty = document.getElementById('prop-difficulty').value;
+            const gamemode = document.getElementById('prop-gamemode').value;
+            const maxPlayers = document.getElementById('prop-max-players').value;
+            const onlineMode = document.getElementById('prop-online-mode').value;
+            const pvp = document.getElementById('prop-pvp').checked ? 'true' : 'false';
+            
+            const opsRaw = document.getElementById('prop-ops').value;
+            const ops_list = opsRaw.split(',').map(name => name.trim()).filter(name => name.length > 0);
+
+            const res = await fetch('/api/properties', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ difficulty, gamemode, "max-players": maxPlayers, "online-mode": onlineMode, pvp, ops_list })
+            });
+            const data = await res.json();
+            showToast(data.message, !res.ok);
+        }
+
+        function toggleEula(show) {
+            const modal = document.getElementById('eula-modal');
+            if (show) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modal.children[0].classList.remove('scale-95');
+            } else {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                modal.children[0].classList.add('scale-95');
+            }
+        }
+
+        async function checkEulaBeforeStart() {
+            const res = await fetch('/api/server/check-eula');
+            const data = await res.json();
+            if (data.accepted) {
+                startServer();
+            } else {
+                toggleEula(true);
+            }
+        }
+
+        async function acceptEulaAndStart() {
+            toggleEula(false);
+            await fetch('/api/server/accept-eula', { method: 'POST' });
+            startServer();
+        }
+
+        async function startServer() {
+            const res = await fetch('/api/server/start', { method: 'POST' });
+            const data = await res.json();
+            showToast(data.message, !res.ok);
+            setTimeout(updateStatus, 1500);
+        }
+
+        async function stopServer() {
+            const res = await fetch('/api/server/stop', { method: 'POST' });
+            const data = await res.json();
+            showToast(data.message, !res.ok);
+            setTimeout(updateStatus, 1000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatus();
+            loadConfig();
+            setInterval(updateStatus, 5000);
+        });
+    </script>
+</body>
+</html>
